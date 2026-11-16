@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>Localisateur Québec V5.0</title>
+<title>Localisateur Québec V5.1</title>
 
 <link rel="stylesheet"
 href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -90,6 +90,18 @@ margin-top:15px;
 line-height:1.7
 }
 
+.resultat .adresse{
+font-size:20px;
+font-weight:bold;
+color:#173d60
+}
+
+.resultat .distance{
+font-size:16px;
+color:#25843a;
+font-weight:bold
+}
+
 #map{
 height:570px;
 width:100%;
@@ -125,7 +137,7 @@ button{width:100%;margin:5px 0}
 
 <header>
 <h1>LOCALISATEUR DES POINTS DE CHUTE DU QUÉBEC</h1>
-<p>Version 5.0 – Administration et géolocalisation</p>
+<p>Version 5.1 – Administration et géolocalisation</p>
 </header>
 
 <div class="container">
@@ -138,7 +150,7 @@ button{width:100%;margin:5px 0}
 
 <p>
 Autorisez votre navigateur à utiliser votre position GPS.
-L'application identifiera l'entrepôt le plus proche.
+L'application identifiera le point de chute le plus proche.
 </p>
 
 <button id="btnGPS" class="green">
@@ -153,7 +165,7 @@ En attente de votre recherche.
 
 </div>
 
-<!-- CONNEXION -->
+<!-- CONNEXION ADMINISTRATEUR -->
 
 <div class="panel">
 
@@ -297,7 +309,7 @@ Initialisation de la carte...
 </div>
 
 <footer>
-Localisateur des points de chute du Québec – V5.0<br>
+Localisateur des points de chute du Québec – V5.1<br>
 Cartographie © OpenStreetMap contributors
 </footer>
 
@@ -471,10 +483,12 @@ marqueurs=[];
 
 points.forEach(p=>{
 
-const marqueur=L.marker([
-Number(p.lat),
-Number(p.lon)
-]).addTo(map);
+const lat=Number(p.lat);
+const lon=Number(p.lon);
+
+if(!Number.isFinite(lat)||!Number.isFinite(lon))return;
+
+const marqueur=L.marker([lat,lon]).addTo(map);
 
 const contenu=document.createElement("div");
 
@@ -1026,7 +1040,7 @@ Math.sqrt(1-a)
 }
 
 // ==========================================
-// RECHERCHE GPS
+// RECHERCHE GPS – VERSION 5.1
 // ==========================================
 
 document.getElementById("btnGPS")
@@ -1066,8 +1080,14 @@ let meilleureDistance=Infinity;
 
 points.forEach(p=>{
 
+const latPoint=Number(p.lat);
+const lonPoint=Number(p.lon);
+
+if(!Number.isFinite(latPoint)||
+!Number.isFinite(lonPoint))return;
+
 const d=distance(
-lat,lon,Number(p.lat),Number(p.lon)
+lat,lon,latPoint,lonPoint
 );
 
 if(d<meilleureDistance){
@@ -1079,6 +1099,20 @@ meilleur=p;
 
 });
 
+if(!meilleur){
+
+message(
+"messageGPS",
+"Aucun point de chute avec coordonnées GPS valides."
+);
+
+bouton.disabled=false;
+return;
+
+}
+
+// AFFICHAGE DU RESULTAT V5.1
+
 const resultat=document.getElementById("resultat");
 
 resultat.replaceChildren();
@@ -1089,26 +1123,36 @@ titre.textContent="⭐ POINT DE CHUTE LE PLUS PRÈS";
 
 resultat.appendChild(titre);
 
-[
-"Nom : "+(meilleur.nom||"Entrepôt"),
-"Région : "+meilleur.region,
-"Ville : "+meilleur.ville,
-"Adresse : "+meilleur.adresse,
-"Code postal : "+meilleur.postal,
-"Distance approximative : "+meilleureDistance.toFixed(1)+" km"
-].forEach(t=>{
+// Adresse uniquement (sans nom ni région)
 
-const p=document.createElement("p");
+const adresse=document.createElement("p");
 
-p.textContent=t;
+adresse.className="adresse";
 
-resultat.appendChild(p);
+adresse.textContent=
+"📍 "+(meilleur.adresse||"Adresse non disponible")+
+", "+(meilleur.ville||"")+
+", QC "+(meilleur.postal||"");
 
-});
+resultat.appendChild(adresse);
+
+// Distance approximative
+
+const distanceAffichee=document.createElement("p");
+
+distanceAffichee.className="distance";
+
+distanceAffichee.textContent=
+"📏 Distance approximative : "+
+meilleureDistance.toFixed(1)+" km";
+
+resultat.appendChild(distanceAffichee);
 
 resultat.style.display="block";
 
 message("messageGPS","Position GPS obtenue.");
+
+// MARQUEUR JAUNE LUMINEUX
 
 if(marqueurRecherche){
 map.removeLayer(marqueurRecherche);
@@ -1225,7 +1269,8 @@ p.lon< -81||p.lon> -56
 ){
 
 throw new Error(
-"Une entrée contient des renseignements invalides : "+(p.adresse||"adresse inconnue")
+"Une entrée contient des renseignements invalides : "+
+(p.adresse||"adresse inconnue")
 );
 
 }
