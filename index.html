@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Localisateur Québec V5.0</title>
+
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+*{box-sizing:border-box}
+
+body{
+margin:0;
+font-family:Arial,sans-serif;
+background:#eef2f5;
+color:#263747
+}
+
+header{
+background:#173d60;
+color:white;
+text-align:center;
+padding:22px 10px
+}
+
+header h1{margin:0;font-size:25px}
+
+.container{
+max-width:1250px;
+margin:auto;
+padding:15px
+}
+
+.panel{
+background:white;
+padding:18px;
+margin-bottom:15px;
+border-radius:9px;
+box-shadow:0 2px 6px #ccc
+}
+
+h2,h3{color:#173d60}
+
+input,select,textarea{
+display:block;
+width:100%;
+padding:12px;
+margin:8px 0 15px;
+border:1px solid #aaa;
+border-radius:5px;
+font-size:15px
+}
+
+button{
+background:#1769aa;
+color:white;
+border:0;
+border-radius:5px;
+padding:12px 16px;
+margin:5px 3px;
+cursor:pointer;
+font-weight:bold
+}
+
+button:hover{background:#104b7c}
+button:disabled{background:#999;cursor:wait}
+
+.green{background:#25843a}
+.red{background:#b52b2b}
+.orange{background:#bd7915}
+
+.message{
+background:#f0f3f5;
+padding:12px;
+border-radius:5px;
+margin-top:10px;
+line-height:1.6;
+overflow-wrap:anywhere
+}
+
+.resultat{
+display:none;
+background:#e5f5e7;
+border-left:6px solid #299a40;
+padding:16px;
+margin-top:15px;
+line-height:1.7
+}
+
+#map{
+height:570px;
+width:100%;
+border-radius:8px;
+background:#ddd
+}
+
+.admin[hidden]{display:none!important}
+
+.point{
+border-bottom:1px solid #ddd;
+padding:12px 4px;
+overflow-wrap:anywhere
+}
+
+.small{font-size:12px;color:#666}
+
+footer{
+text-align:center;
+padding:20px;
+color:#666
+}
+
+@media(max-width:600px){
+#map{height:430px}
+header h1{font-size:20px}
+button{width:100%;margin:5px 0}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>LOCALISATEUR DES POINTS DE CHUTE DU QUÉBEC</h1>
+<p>Version 5.0 – Administration et géolocalisation</p>
+</header>
+
+<div class="container">
+
+<!-- RECHERCHE UTILISATEUR -->
+
+<div class="panel">
+
+<h2>📍 Trouver le point de chute le plus près</h2>
+
+<p>
+Autorisez votre navigateur à utiliser votre position GPS.
+L'application identifiera l'entrepôt le plus proche.
+</p>
+
+<button id="btnGPS" class="green">
+📍 TROUVER MON POINT DE CHUTE
+</button>
+
+<div id="messageGPS" class="message">
+En attente de votre recherche.
+</div>
+
+<div id="resultat" class="resultat"></div>
+
+</div>
+
+<!-- CONNEXION -->
+
+<div class="panel">
+
+<h3>Administration</h3>
+
+<div id="connexion">
+
+<label>Adresse courriel administrateur :</label>
+<input id="email" type="email" autocomplete="username">
+
+<label>Mot de passe :</label>
+<input id="password" type="password" autocomplete="current-password">
+
+<button id="btnConnexion">
+ACCÈS ADMINISTRATEUR
+</button>
+
+</div>
+
+<button id="btnDeconnexion" class="red" hidden>
+FERMER SESSION
+</button>
+
+<div id="etatAdmin" class="message">
+Mode consultation seulement.
+</div>
+
+</div>
+
+<!-- ADMINISTRATION -->
+
+<div id="zoneAdmin" class="panel admin" hidden>
+
+<h2>⚙️ Administration des points de chute</h2>
+
+<h3>Ajouter un point de chute</h3>
+
+<label>Région :</label>
+
+<select id="region">
+<option value="">Choisir une région</option>
+<option>Laval</option>
+<option>Montérégie</option>
+<option>Laurentides</option>
+<option>Lanaudière</option>
+<option>Québec</option>
+<option>Chaudière-Appalaches</option>
+<option>Bas-Saint-Laurent</option>
+<option>Gaspésie–Îles-de-la-Madeleine</option>
+<option>Saguenay–Lac-Saint-Jean</option>
+<option>Bas-du-Fleuve et Témiscouata</option>
+<option>Mauricie</option>
+<option>Centre-du-Québec</option>
+<option>Abitibi-Témiscamingue</option>
+<option>Estrie</option>
+</select>
+
+<label>Nom de l'entrepôt :</label>
+<input id="nom" placeholder="Nom du point de chute">
+
+<label>Ville :</label>
+<input id="ville" placeholder="Nom de la ville">
+
+<label>Adresse civique :</label>
+<input id="adresse" placeholder="Adresse complète">
+
+<label>Code postal :</label>
+<input id="postal" placeholder="Ex. J1L 0C6">
+
+<label>Description complémentaire :</label>
+<textarea id="description"></textarea>
+
+<button id="btnLocaliser">
+🔎 RECHERCHER L'ADRESSE
+</button>
+
+<div id="messagePosition" class="message">
+Aucun emplacement sélectionné.
+</div>
+
+<p>
+Si l'adresse n'est pas reconnue automatiquement,
+clique directement sur la carte pour placer le marqueur.
+</p>
+
+<button id="btnAjouter" class="green">
+➕ ENREGISTRER LE POINT DE CHUTE
+</button>
+
+<hr>
+
+<h3>Gestion des points de chute</h3>
+
+<div id="listePoints"></div>
+
+<hr>
+
+<h3>Importation de l'ancienne sauvegarde</h3>
+
+<p>
+Sélectionne ton fichier JSON sauvegardé avec la version 4.1.
+Les anciens identifiants seront remplacés automatiquement.
+</p>
+
+<input type="file" id="fichierImport" accept=".json">
+
+<button id="btnImport" class="orange">
+IMPORTER LES ANCIENS POINTS DE CHUTE
+</button>
+
+<hr>
+
+<button id="btnExport" class="green">
+💾 EXPORTER UNE SAUVEGARDE JSON
+</button>
+
+<div id="messageImport" class="message"></div>
+
+</div>
+
+<!-- CARTE -->
+
+<div class="panel">
+
+<h2>🗺️ Carte du Québec</h2>
+
+<div id="map"></div>
+
+<p class="small">
+🔵 Points de chute enregistrés.<br>
+🟡 Point de chute le plus proche.<br>
+🔴 Position sélectionnée par l'administrateur.
+</p>
+
+<div id="etatCarte" class="message">
+Initialisation de la carte...
+</div>
+
+</div>
+
+</div>
+
+<footer>
+Localisateur des points de chute du Québec – V5.0<br>
+Cartographie © OpenStreetMap contributors
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+// ==========================================
+// CONFIGURATION SUPABASE
+// ==========================================
+
+const SUPABASE_URL =
+"https://ouwcrhtjcsvnoglaxhkt.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_Bft4ifd6T_-335r_S3IAyQ_txZtdftH";
+
+const client = window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
+
+// ==========================================
+// VARIABLES
+// ==========================================
+
+let map=null;
+let points=[];
+let marqueurs=[];
+let marqueurTemporaire=null;
+let marqueurRecherche=null;
+let coordonneesSelectionnees=null;
+let administrateur=false;
+let derniereRecherche=0;
+
+const REGIONS=[
+"Laval",
+"Montérégie",
+"Laurentides",
+"Lanaudière",
+"Québec",
+"Chaudière-Appalaches",
+"Bas-Saint-Laurent",
+"Gaspésie–Îles-de-la-Madeleine",
+"Saguenay–Lac-Saint-Jean",
+"Bas-du-Fleuve et Témiscouata",
+"Mauricie",
+"Centre-du-Québec",
+"Abitibi-Témiscamingue",
+"Estrie"
+];
+
+// ==========================================
+// MESSAGES
+// ==========================================
+
+function message(id,texte){
+document.getElementById(id).textContent=texte;
+}
+
+// ==========================================
+// CARTE
+// ==========================================
+
+function initialiserCarte(){
+
+if(typeof L==="undefined"){
+message("etatCarte","Leaflet ne peut être chargé.");
+return;
+}
+
+map=L.map("map").setView([47.2,-71.5],6);
+
+L.tileLayer(
+"https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+{
+maxZoom:19,
+attribution:
+'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}
+).addTo(map);
+
+map.on("click",function(e){
+
+if(!administrateur)return;
+
+coordonneesSelectionnees={
+lat:e.latlng.lat,
+lon:e.latlng.lng
+};
+
+if(marqueurTemporaire){
+map.removeLayer(marqueurTemporaire);
+}
+
+marqueurTemporaire=L.marker([
+coordonneesSelectionnees.lat,
+coordonneesSelectionnees.lon
+]).addTo(map);
+
+marqueurTemporaire.bindPopup(
+"Emplacement sélectionné"
+).openPopup();
+
+message(
+"messagePosition",
+"Position sélectionnée : "+
+coordonneesSelectionnees.lat.toFixed(6)+
+" / "+
+coordonneesSelectionnees.lon.toFixed(6)
+);
+
+});
+
+message("etatCarte","Carte initialisée.");
+
+}
+
+// ==========================================
+// CHARGEMENT DES POINTS SUPABASE
+// ==========================================
+
+async function chargerPoints(){
+
+message("etatCarte","Chargement des points de chute...");
+
+const {data,error}=await client
+.from("points_chute")
+.select("*")
+.order("region")
+.order("ville");
+
+if(error){
+
+message(
+"etatCarte",
+"Erreur de chargement : "+error.message
+);
+
+return false;
+
+}
+
+points=data||[];
+
+afficherPoints();
+
+if(administrateur)afficherListe();
+
+message(
+"etatCarte",
+points.length+" point(s) de chute chargé(s)."
+);
+
+return true;
+
+}
+
+// ==========================================
+// AFFICHAGE DES MARQUEURS
+// ==========================================
+
+function afficherPoints(){
+
+if(!map)return;
+
+marqueurs.forEach(m=>map.removeLayer(m));
+
+marqueurs=[];
+
+points.forEach(p=>{
+
+const marqueur=L.marker([
+Number(p.lat),
+Number(p.lon)
+]).addTo(map);
+
+const contenu=document.createElement("div");
+
+const titre=document.createElement("b");
+
+titre.textContent=p.nom||"Point de chute";
+
+contenu.appendChild(titre);
+
+[
+"Région : "+p.region,
+"Ville : "+p.ville,
+"Adresse : "+p.adresse,
+"Code postal : "+p.postal,
+p.description||""
+].filter(Boolean).forEach(t=>{
+
+const ligne=document.createElement("div");
+
+ligne.textContent=t;
+
+contenu.appendChild(ligne);
+
+});
+
+marqueur.bindPopup(contenu);
+
+marqueurs.push(marqueur);
+
+});
+
+}
+
+// ==========================================
+// AUTHENTIFICATION ADMINISTRATEUR
+// ==========================================
+
+async function verifierAdministrateur(){
+
+const {data,error}=await client.rpc("is_admin");
+
+if(error){
+console.error(error);
+return false;
+}
+
+return data===true;
+
+}
+
+async function connexion(){
+
+const email=document.getElementById("email").value.trim();
+
+const password=document.getElementById("password").value;
+
+if(!email||!password){
+
+message("etatAdmin","Inscris ton courriel et ton mot de passe.");
+
+return;
+
+}
+
+const bouton=document.getElementById("btnConnexion");
+
+bouton.disabled=true;
+
+message("etatAdmin","Connexion en cours...");
+
+const {error}=await client.auth.signInWithPassword({
+email,
+password
+});
+
+bouton.disabled=false;
+
+if(error){
+
+message("etatAdmin","Connexion refusée : "+error.message);
+
+return;
+
+}
+
+administrateur=await verifierAdministrateur();
+
+if(!administrateur){
+
+await client.auth.signOut();
+
+message(
+"etatAdmin",
+"Ce compte n'a pas les droits administrateur."
+);
+
+return;
+
+}
+
+afficherModeAdmin();
+
+await chargerPoints();
+
+}
+
+function afficherModeAdmin(){
+
+document.getElementById("connexion").hidden=true;
+
+document.getElementById("btnDeconnexion").hidden=false;
+
+document.getElementById("zoneAdmin").hidden=false;
+
+message(
+"etatAdmin",
+"Administrateur connecté. Modifications autorisées."
+);
+
+afficherListe();
+
+}
+
+async function deconnexion(){
+
+await client.auth.signOut();
+
+administrateur=false;
+
+document.getElementById("connexion").hidden=false;
+
+document.getElementById("btnDeconnexion").hidden=true;
+
+document.getElementById("zoneAdmin").hidden=true;
+
+message("etatAdmin","Mode consultation seulement.");
+
+if(marqueurTemporaire){
+map.removeLayer(marqueurTemporaire);
+}
+
+marqueurTemporaire=null;
+
+coordonneesSelectionnees=null;
+
+}
+
+// ==========================================
+// AUTHENTIFICATION AU DEMARRAGE
+// ==========================================
+
+async function verifierSession(){
+
+const {data}=await client.auth.getSession();
+
+if(data.session){
+
+administrateur=await verifierAdministrateur();
+
+if(administrateur){
+afficherModeAdmin();
+}
+
+}
+
+await chargerPoints();
+
+}
+
+client.auth.onAuthStateChange((event,session)=>{
+
+if(event==="SIGNED_OUT"){
+
+administrateur=false;
+
+document.getElementById("connexion").hidden=false;
+
+document.getElementById("btnDeconnexion").hidden=true;
+
+document.getElementById("zoneAdmin").hidden=true;
+
+message("etatAdmin","Mode consultation seulement.");
+
+}
+
+});
+
+// ==========================================
+// GEOCODAGE NOMINATIM
+// ==========================================
+
+async function geocoder(parametres){
+
+const attente=Math.max(
+0,
+1100-(Date.now()-derniereRecherche)
+);
+
+if(attente>0){
+await new Promise(r=>setTimeout(r,attente));
+}
+
+derniereRecherche=Date.now();
+
+const url=new URL(
+"https://nominatim.openstreetmap.org/search"
+);
+
+url.search=new URLSearchParams({
+...parametres,
+format:"jsonv2",
+limit:"5",
+countrycodes:"ca"
+});
+
+const reponse=await fetch(url);
+
+if(!reponse.ok){
+throw new Error("Service de géolocalisation indisponible.");
+}
+
+return await reponse.json();
+
+}
+
+async function rechercherAdresse(){
+
+const adresse=document.getElementById("adresse").value.trim();
+const ville=document.getElementById("ville").value.trim();
+const postal=document.getElementById("postal").value.trim();
+
+if(!adresse||!ville){
+
+throw new Error("Inscris l'adresse et la ville.");
+
+}
+
+let resultats=await geocoder({
+
+street:adresse,
+city:ville,
+state:"Québec",
+postalcode:postal,
+country:"Canada"
+
+});
+
+if(!resultats.length){
+
+resultats=await geocoder({
+
+street:adresse,
+city:ville,
+state:"Québec",
+country:"Canada"
+
+});
+
+}
+
+if(!resultats.length){
+
+resultats=await geocoder({
+
+q:adresse+", "+ville+", Quebec, Canada"
+
+});
+
+}
+
+return resultats;
+
+}
+
+// ==========================================
+// LOCALISER L'ADRESSE
+// ==========================================
+
+document.getElementById("btnLocaliser")
+.addEventListener("click",async function(){
+
+if(!administrateur)return;
+
+this.disabled=true;
+
+message("messagePosition","Recherche de l'adresse...");
+
+try{
+
+const resultats=await rechercherAdresse();
+
+const resultat=resultats.find(r=>{
+
+const lat=Number(r.lat);
+const lon=Number(r.lon);
+
+return Number.isFinite(lat)&&
+Number.isFinite(lon)&&
+lat>=44&&lat<=63&&
+lon>=-81&&lon<=-56;
+
+});
+
+if(!resultat){
+
+coordonneesSelectionnees=null;
+
+message(
+"messagePosition",
+"Adresse non reconnue. Clique directement sur la carte pour placer le marqueur."
+);
+
+return;
+
+}
+
+coordonneesSelectionnees={
+lat:Number(resultat.lat),
+lon:Number(resultat.lon)
+};
+
+if(marqueurTemporaire){
+map.removeLayer(marqueurTemporaire);
+}
+
+marqueurTemporaire=L.marker([
+coordonneesSelectionnees.lat,
+coordonneesSelectionnees.lon
+]).addTo(map);
+
+marqueurTemporaire.bindPopup(
+"Emplacement proposé. Vérifie sa position."
+).openPopup();
+
+map.setView([
+coordonneesSelectionnees.lat,
+coordonneesSelectionnees.lon
+],16);
+
+message(
+"messagePosition",
+"Adresse localisée. Vérifie le marqueur."
+);
+
+}catch(e){
+
+message(
+"messagePosition",
+e.message+" Tu peux placer le marqueur manuellement."
+);
+
+}finally{
+
+this.disabled=false;
+
+}
+
+});
+
+// ==========================================
+// AJOUTER UN POINT DE CHUTE
+// ==========================================
+
+document.getElementById("btnAjouter")
+.addEventListener("click",async function(){
+
+if(!administrateur)return;
+
+const point={
+
+region:document.getElementById("region").value,
+
+nom:document.getElementById("nom").value.trim(),
+
+ville:document.getElementById("ville").value.trim(),
+
+adresse:document.getElementById("adresse").value.trim(),
+
+postal:document.getElementById("postal").value.trim().toUpperCase(),
+
+description:document.getElementById("description").value.trim(),
+
+lat:coordonneesSelectionnees?.lat,
+
+lon:coordonneesSelectionnees?.lon
+
+};
+
+if(
+!point.region||
+!point.ville||
+!point.adresse||
+!point.postal
+){
+
+message("messagePosition","Remplis les champs obligatoires.");
+
+return;
+
+}
+
+if(!REGIONS.includes(point.region)){
+
+message("messagePosition","Région invalide.");
+
+return;
+
+}
+
+if(
+!Number.isFinite(point.lat)||
+!Number.isFinite(point.lon)
+){
+
+message(
+"messagePosition",
+"Localise l'adresse ou clique sur la carte."
+);
+
+return;
+
+}
+
+const bouton=this;
+
+bouton.disabled=true;
+
+const {error}=await client
+.from("points_chute")
+.insert(point);
+
+bouton.disabled=false;
+
+if(error){
+
+message("messagePosition","Erreur : "+error.message);
+
+return;
+
+}
+
+message("messagePosition","Point de chute enregistré!");
+
+[
+"nom","ville","adresse","postal","description"
+].forEach(id=>{
+document.getElementById(id).value="";
+});
+
+document.getElementById("region").value="";
+
+coordonneesSelectionnees=null;
+
+if(marqueurTemporaire){
+map.removeLayer(marqueurTemporaire);
+}
+
+marqueurTemporaire=null;
+
+await chargerPoints();
+
+});
+
+// ==========================================
+// LISTE ADMINISTRATIVE
+// ==========================================
+
+function afficherListe(){
+
+const liste=document.getElementById("listePoints");
+
+liste.replaceChildren();
+
+points.forEach(p=>{
+
+const ligne=document.createElement("div");
+
+ligne.className="point";
+
+const texte=document.createElement("p");
+
+texte.textContent=
+p.region+" | "+p.ville+" | "+
+p.adresse+" | "+p.postal;
+
+ligne.appendChild(texte);
+
+const bouton=document.createElement("button");
+
+bouton.className="red";
+
+bouton.textContent="SUPPRIMER";
+
+bouton.addEventListener("click",async()=>{
+
+if(!administrateur)return;
+
+if(!confirm("Confirmer la suppression de ce point de chute?")){
+return;
+}
+
+const {error}=await client
+.from("points_chute")
+.delete()
+.eq("id",p.id);
+
+if(error){
+
+alert("Erreur : "+error.message);
+
+return;
+
+}
+
+await chargerPoints();
+
+});
+
+ligne.appendChild(bouton);
+
+liste.appendChild(ligne);
+
+});
+
+}
+
+// ==========================================
+// DISTANCE GPS
+// ==========================================
+
+function distance(lat1,lon1,lat2,lon2){
+
+const R=6371;
+
+const dLat=(lat2-lat1)*Math.PI/180;
+const dLon=(lon2-lon1)*Math.PI/180;
+
+const a=
+Math.sin(dLat/2)**2+
+Math.cos(lat1*Math.PI/180)*
+Math.cos(lat2*Math.PI/180)*
+Math.sin(dLon/2)**2;
+
+return R*2*Math.atan2(
+Math.sqrt(a),
+Math.sqrt(1-a)
+);
+
+}
+
+// ==========================================
+// RECHERCHE GPS
+// ==========================================
+
+document.getElementById("btnGPS")
+.addEventListener("click",function(){
+
+const bouton=this;
+
+if(points.length===0){
+
+message("messageGPS","Aucun point de chute enregistré.");
+
+return;
+
+}
+
+if(!navigator.geolocation){
+
+message("messageGPS","GPS non disponible.");
+
+return;
+
+}
+
+bouton.disabled=true;
+
+message("messageGPS","Recherche de votre position GPS...");
+
+navigator.geolocation.getCurrentPosition(
+
+function(position){
+
+const lat=position.coords.latitude;
+const lon=position.coords.longitude;
+
+let meilleur=null;
+let meilleureDistance=Infinity;
+
+points.forEach(p=>{
+
+const d=distance(
+lat,lon,Number(p.lat),Number(p.lon)
+);
+
+if(d<meilleureDistance){
+
+meilleureDistance=d;
+meilleur=p;
+
+}
+
+});
+
+const resultat=document.getElementById("resultat");
+
+resultat.replaceChildren();
+
+const titre=document.createElement("h3");
+
+titre.textContent="⭐ POINT DE CHUTE LE PLUS PRÈS";
+
+resultat.appendChild(titre);
+
+[
+"Nom : "+(meilleur.nom||"Entrepôt"),
+"Région : "+meilleur.region,
+"Ville : "+meilleur.ville,
+"Adresse : "+meilleur.adresse,
+"Code postal : "+meilleur.postal,
+"Distance approximative : "+meilleureDistance.toFixed(1)+" km"
+].forEach(t=>{
+
+const p=document.createElement("p");
+
+p.textContent=t;
+
+resultat.appendChild(p);
+
+});
+
+resultat.style.display="block";
+
+message("messageGPS","Position GPS obtenue.");
+
+if(marqueurRecherche){
+map.removeLayer(marqueurRecherche);
+}
+
+marqueurRecherche=L.circleMarker(
+[Number(meilleur.lat),Number(meilleur.lon)],
+{
+radius:19,
+color:"#ff0000",
+weight:5,
+fillColor:"#ffff00",
+fillOpacity:1
+}
+).addTo(map);
+
+marqueurRecherche.bindPopup(
+"⭐ POINT DE CHUTE LE PLUS PRÈS"
+).openPopup();
+
+map.setView([
+Number(meilleur.lat),
+Number(meilleur.lon)
+],13);
+
+bouton.disabled=false;
+
+},
+
+function(erreur){
+
+const messages={
+1:"Autorisation GPS refusée. Vérifie les permissions Firefox.",
+2:"Position GPS indisponible.",
+3:"Délai GPS dépassé."
+};
+
+message(
+"messageGPS",
+messages[erreur.code]||"Erreur GPS."
+);
+
+bouton.disabled=false;
+
+},
+
+{
+enableHighAccuracy:true,
+timeout:20000,
+maximumAge:60000
+}
+
+);
+
+});
+
+// ==========================================
+// IMPORTATION JSON
+// ==========================================
+
+document.getElementById("btnImport")
+.addEventListener("click",async function(){
+
+if(!administrateur)return;
+
+const fichier=document.getElementById("fichierImport").files[0];
+
+if(!fichier){
+
+message("messageImport","Sélectionne d'abord ton fichier JSON.");
+
+return;
+
+}
+
+if(!confirm(
+"Importer les points de chute dans Supabase? Les points existants seront conservés."
+))return;
+
+try{
+
+const texte=await fichier.text();
+
+const donnees=JSON.parse(texte);
+
+if(!Array.isArray(donnees)){
+throw new Error("Format JSON invalide.");
+}
+
+const nouveaux=donnees.map(p=>({
+
+region:p.region,
+nom:p.nom||"",
+ville:p.ville,
+adresse:p.adresse,
+postal:p.postal,
+description:p.description||"",
+lat:Number(p.lat),
+lon:Number(p.lon)
+
+}));
+
+for(const p of nouveaux){
+
+if(
+!REGIONS.includes(p.region)||
+!p.ville||
+!p.adresse||
+!p.postal||
+!Number.isFinite(p.lat)||
+!Number.isFinite(p.lon)||
+p.lat<44||p.lat>63||
+p.lon< -81||p.lon> -56
+){
+
+throw new Error(
+"Une entrée contient des renseignements invalides : "+(p.adresse||"adresse inconnue")
+);
+
+}
+
+}
+
+let importes=0;
+
+for(let i=0;i<nouveaux.length;i+=50){
+
+const lot=nouveaux.slice(i,i+50);
+
+const {error}=await client
+.from("points_chute")
+.insert(lot);
+
+if(error){
+
+throw new Error(
+"Importation interrompue après "+importes+
+" points : "+error.message
+);
+
+}
+
+importes+=lot.length;
+
+}
+
+message(
+"messageImport",
+importes+" point(s) importé(s) avec succès."
+);
+
+await chargerPoints();
+
+}catch(e){
+
+message("messageImport","Erreur : "+e.message);
+
+}
+
+});
+
+// ==========================================
+// EXPORTATION JSON
+// ==========================================
+
+document.getElementById("btnExport")
+.addEventListener("click",function(){
+
+if(!administrateur)return;
+
+const fichier=new Blob(
+[JSON.stringify(points,null,2)],
+{type:"application/json"}
+);
+
+const url=URL.createObjectURL(fichier);
+
+const lien=document.createElement("a");
+
+lien.href=url;
+
+lien.download="Sauvegarde_Points_Chute_Quebec.json";
+
+lien.click();
+
+setTimeout(()=>{
+URL.revokeObjectURL(url);
+},1000);
+
+});
+
+// ==========================================
+// BOUTONS
+// ==========================================
+
+document.getElementById("btnConnexion")
+.addEventListener("click",connexion);
+
+document.getElementById("btnDeconnexion")
+.addEventListener("click",deconnexion);
+
+// ==========================================
+// DEMARRAGE
+// ==========================================
+
+async function demarrer(){
+
+initialiserCarte();
+
+if(!map)return;
+
+await verifierSession();
+
+setTimeout(()=>{
+map.invalidateSize();
+},500);
+
+}
+
+demarrer();
+
+</script>
+
+</body>
+</html>
