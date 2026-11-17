@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>Localisateur Québec V5.1</title>
+<title>Localisateur ACQ v1.2</title>
 
 <link rel="stylesheet"
 href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -136,8 +136,8 @@ button{width:100%;margin:5px 0}
 <body>
 
 <header>
-<h1>LOCALISATEUR DES POINTS DE CHUTE DU QUÉBEC</h1>
-<p>Version 5.1 – Administration et géolocalisation</p>
+<h1>Localisateur ACQ de points de chute</h1>
+<p><strong>ALTERNATIVE CITOYENNE du QUÉBEC</strong></p>
 </header>
 
 <div class="container">
@@ -162,6 +162,26 @@ En attente de votre recherche.
 </div>
 
 <div id="resultat" class="resultat"></div>
+
+</div>
+
+<!-- CARTE -->
+
+<div class="panel">
+
+<h2>🗺️ Carte du Québec</h2>
+
+<div id="map"></div>
+
+<p class="small">
+🔵 Points de chute enregistrés.<br>
+🟡 Point de chute le plus proche.<br>
+🔴 Position sélectionnée par l'administrateur.
+</p>
+
+<div id="etatCarte" class="message">
+Initialisation de la carte...
+</div>
 
 </div>
 
@@ -286,31 +306,12 @@ IMPORTER LES ANCIENS POINTS DE CHUTE
 
 </div>
 
-<!-- CARTE -->
-
-<div class="panel">
-
-<h2>🗺️ Carte du Québec</h2>
-
-<div id="map"></div>
-
-<p class="small">
-🔵 Points de chute enregistrés.<br>
-🟡 Point de chute le plus proche.<br>
-🔴 Position sélectionnée par l'administrateur.
-</p>
-
-<div id="etatCarte" class="message">
-Initialisation de la carte...
-</div>
-
-</div>
-
 </div>
 
 <footer>
-Localisateur des points de chute du Québec – V5.1<br>
-Cartographie © OpenStreetMap contributors
+<strong>WEB © 2026 RAFournier@pm.me</strong><br>
+Cartographie © OpenStreetMap contributeurs<br>
+Version 1.2
 </footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
