@@ -150,7 +150,7 @@ button{width:100%;margin:5px 0}
 
 <p>
 Autorisez votre navigateur à utiliser votre position GPS.
-L'application identifiera le point de chute le plus proche.
+L'application identifiera le point le plus proche.
 </p>
 
 <button id="btnGPS" class="green">
@@ -175,7 +175,7 @@ En attente de votre recherche.
 
 <p class="small">
 🔵 Points de chute enregistrés.<br>
-🟡 Point de chute le plus proche.<br>
+🟡 Point le plus proche.<br>
 🔴 Position sélectionnée par l'administrateur.
 </p>
 
@@ -1120,7 +1120,7 @@ resultat.replaceChildren();
 
 const titre=document.createElement("h3");
 
-titre.textContent="⭐ POINT DE CHUTE LE PLUS PRÈS";
+titre.textContent="⭐ POINT LE PLUS PRÈS";
 
 resultat.appendChild(titre);
 
@@ -1171,7 +1171,7 @@ fillOpacity:1
 ).addTo(map);
 
 marqueurRecherche.bindPopup(
-"⭐ POINT DE CHUTE LE PLUS PRÈS"
+"⭐ POINT LE PLUS PRÈS"
 ).openPopup();
 
 map.setView([
