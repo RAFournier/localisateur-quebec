@@ -174,7 +174,7 @@ En attente de votre recherche.
 <div id="map"></div>
 
 <p class="small">
-🔵 Points de chute enregistrés.<br>
+🔵 Points enregistrés.<br>
 🟡 Point le plus proche.<br>
 🔴 Position sélectionnée par l'administrateur.
 </p>
@@ -219,9 +219,9 @@ Mode consultation seulement.
 
 <div id="zoneAdmin" class="panel admin" hidden>
 
-<h2>⚙️ Administration des points de chute</h2>
+<h2>⚙️ Administration de position </h2>
 
-<h3>Ajouter un point de chute</h3>
+<h3>Ajouter un point</h3>
 
 <label>Région :</label>
 
@@ -244,7 +244,7 @@ Mode consultation seulement.
 </select>
 
 <label>Nom de l'entrepôt :</label>
-<input id="nom" placeholder="Nom du point de chute">
+<input id="nom" placeholder="Nom du point">
 
 <label>Ville :</label>
 <input id="ville" placeholder="Nom de la ville">
@@ -272,12 +272,12 @@ clique directement sur la carte pour placer le marqueur.
 </p>
 
 <button id="btnAjouter" class="green">
-➕ ENREGISTRER LE POINT DE CHUTE
+➕ ENREGISTRER LE POINT
 </button>
 
 <hr>
 
-<h3>Gestion des points de chute</h3>
+<h3>Gestion des points de position</h3>
 
 <div id="listePoints"></div>
 
@@ -293,7 +293,7 @@ Les anciens identifiants seront remplacés automatiquement.
 <input type="file" id="fichierImport" accept=".json">
 
 <button id="btnImport" class="orange">
-IMPORTER LES ANCIENS POINTS DE CHUTE
+IMPORTER LES ANCIENS POINTS DE POSITION
 </button>
 
 <hr>
@@ -436,7 +436,7 @@ message("etatCarte","Carte initialisée.");
 
 async function chargerPoints(){
 
-message("etatCarte","Chargement des points de chute...");
+message("etatCarte","Chargement des points de position...");
 
 const {data,error}=await client
 .from("points_chute")
@@ -463,7 +463,7 @@ if(administrateur)afficherListe();
 
 message(
 "etatCarte",
-points.length+" point(s) de chute chargé(s)."
+points.length+" point(s) de position chargé(s)."
 );
 
 return true;
@@ -495,7 +495,7 @@ const contenu=document.createElement("div");
 
 const titre=document.createElement("b");
 
-titre.textContent=p.nom||"Point de chute";
+titre.textContent=p.nom||"Point de position";
 
 contenu.appendChild(titre);
 
@@ -850,7 +850,7 @@ this.disabled=false;
 });
 
 // ==========================================
-// AJOUTER UN POINT DE CHUTE
+// AJOUTER UN POINT DE POSITION
 // ==========================================
 
 document.getElementById("btnAjouter")
@@ -931,7 +931,7 @@ return;
 
 }
 
-message("messagePosition","Point de chute enregistré!");
+message("messagePosition","Point de POSITION enregistré!");
 
 [
 "nom","ville","adresse","postal","description"
@@ -987,7 +987,7 @@ bouton.addEventListener("click",async()=>{
 
 if(!administrateur)return;
 
-if(!confirm("Confirmer la suppression de ce point de chute?")){
+if(!confirm("Confirmer la suppression de ce point de position?")){
 return;
 }
 
@@ -1051,7 +1051,7 @@ const bouton=this;
 
 if(points.length===0){
 
-message("messageGPS","Aucun point de chute enregistré.");
+message("messageGPS","Aucun point de position enregistré.");
 
 return;
 
@@ -1104,7 +1104,7 @@ if(!meilleur){
 
 message(
 "messageGPS",
-"Aucun point de chute avec coordonnées GPS valides."
+"Aucun point avec coordonnées GPS valides."
 );
 
 bouton.disabled=false;
@@ -1230,7 +1230,7 @@ return;
 }
 
 if(!confirm(
-"Importer les points de chute dans Supabase? Les points existants seront conservés."
+"Importer les points dans Supabase? Les points existants seront conservés."
 ))return;
 
 try{
