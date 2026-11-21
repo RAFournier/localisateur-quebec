@@ -1,2 +1,2 @@
-# Informatique
-OS Linux Ubuntu
+# OS Linux Ubuntu
+Service informatique
